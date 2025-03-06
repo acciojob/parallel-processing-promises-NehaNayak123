@@ -1,6 +1,7 @@
-//your JS code here. If required.
 const output = document.getElementById("output");
 const btn = document.getElementById("download-images-button");
+const loadingDiv = document.getElementById("loading");
+const errorDiv = document.getElementById("error");
 
 const images = [
   { url: "https://picsum.photos/id/237/200/300" },
@@ -8,40 +9,30 @@ const images = [
   { url: "https://picsum.photos/id/239/200/300" },
 ];
 
-const loadImage=(image)=>{
-  return new Promise((resolve, reject)=>{
-    const img=new Image();
-    img.scr=image.url
-
-    img.onload=()=>resolve(img)
-    img.onerror=()=>reject(new Error(`Failed to load image's url : ${image.url}`))
-  })
+function downloadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = url;
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+  });
 }
 
+async function downloadImages() {
+  // Clear previous content
+  output.innerHTML = "";
+  errorDiv.innerHTML = "";
+  loadingDiv.style.display = "block"; // Show loading spinner
 
-btn.addEventListener("click", ()=>{
-  const promises=images.map((image)=>loadImage(image))//[p1,p2,p3]
-   
-  Promise.all(promises)
-  .then((loadImages)=>{
-    output.innerHTML="";
-    loadImages.forEach((img)=>{
-      output.appendChild(img);
-    })
-  })
-  .catch((error)=>{
-    console.log(error.message)
-  })
-})
+  try {
+    const imageElements = await Promise.all(images.map(img => downloadImage(img.url)));
+    imageElements.forEach(img => output.appendChild(img));
+  } catch (error) {
+    errorDiv.textContent = error.message;
+  } finally {
+    loadingDiv.style.display = "none"; // Hide loading spinner
+  }
+}
 
-
-
-// //your JS code here. If required.
-// const output = document.getElementById("output");
-// const btn = document.getElementById("download-images-button");
-
-// const images = [
-//   { url: "https://picsum.photos/id/237/200/300" },
-//   { url: "https://picsum.photos/id/238/200/300" },
-//   { url: "https://picsum.photos/id/239/200/300" },
-// ];
+// Attach event listener to button
+btn.addEventListener("click", downloadImages);
